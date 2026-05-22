@@ -44,7 +44,8 @@ export async function refreshToken(req, res) {
 
     const newAccessToken = generateAccessToken({
       userId: payload.userId,
-      sessionId,
+      deviceId: payload.deviceId,
+      sessionId: newSession.id,
     });
 
     const newRefreshToken = generateRefreshToken({

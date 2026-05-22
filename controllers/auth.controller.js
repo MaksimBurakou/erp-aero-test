@@ -9,10 +9,12 @@ import {
 export async function signup(req, res) {
   try {
     const { id, password } = req.body;
+
     if (!id || !password)
       return res
         .status(400)
         .json({ message: "Email/phone and password are required" });
+
     if (!isValidLogin(id))
       return res.status(400).json({ message: "Invalid email or phone format" });
 
@@ -28,12 +30,14 @@ export async function signup(req, res) {
 export async function signin(req, res) {
   try {
     const { id, password } = req.body;
+
     if (!id || !password)
       return res
         .status(400)
         .json({ message: "Email/phone and password are required" });
 
     const tokens = await loginUser(id, password);
+
     return res.json(tokens);
   } catch (err) {
     return res

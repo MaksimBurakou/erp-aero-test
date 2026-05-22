@@ -7,16 +7,30 @@ const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 
 async function createSession(userId) {
   const deviceId = uuidv4();
-  const accessToken = generateAccessToken({ userId, deviceId });
-  const refreshToken = generateRefreshToken({ userId, deviceId });
 
-  await prisma.session.create({
+  const session = await prisma.session.create({
     data: {
       userId,
       deviceId,
-      refreshToken,
+      refreshToken: "",
       expiresAt: new Date(Date.now() + SESSION_TTL),
     },
+  });
+
+  const accessToken = generateAccessToken({
+    userId,
+    deviceId,
+    sessionId: session.id,
+  });
+
+  const refreshToken = generateRefreshToken({
+    userId,
+    deviceId,
+  });
+
+  await prisma.session.update({
+    where: { id: session.id },
+    data: { refreshToken },
   });
 
   return { accessToken, refreshToken, deviceId };
@@ -24,6 +38,7 @@ async function createSession(userId) {
 
 export async function registerUser(id, password) {
   const existingUser = await prisma.user.findUnique({ where: { login: id } });
+
   if (existingUser) throw { status: 400, message: "User already exists" };
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -34,9 +49,11 @@ export async function registerUser(id, password) {
 
 export async function loginUser(id, password) {
   const user = await prisma.user.findUnique({ where: { login: id } });
+
   if (!user) throw { status: 401, message: "Invalid credentials" };
 
   const isValid = await bcrypt.compare(password, user.passwordHash);
+
   if (!isValid) throw { status: 401, message: "Invalid credentials" };
 
   return createSession(user.id);
