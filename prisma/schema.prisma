@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  login        String    @unique
+  passwordHash String
+  sessions Session[]
+  files    File[]
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  refreshToken String   @db.Text
+  deviceId     String
+  isRevoked    Boolean  @default(false)
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model File {
+  id           Int      @id @default(autoincrement())
+  originalName String
+  storedName   String
+  extension    String
+  mimeType     String
+  size         Int
+  path         String
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
